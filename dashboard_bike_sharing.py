@@ -6,7 +6,7 @@ import streamlit as st
 sns.set(style='darkgrid')
 
 # Load dataset
-day_df = pd.read_csv("../data/day.csv")
+day_df = pd.read_csv("day.csv")
 
 # Konversi kolom tanggal
 day_df['dteday'] = pd.to_datetime(day_df['dteday'])
