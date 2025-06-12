@@ -18,12 +18,19 @@ max_date = day_df['dteday'].max()
 with st.sidebar:
     st.title("Bike Sharing Dashboard")
     st.markdown("### Pilih Rentang Waktu:")
-    start_date, end_date = st.date_input(
+    date_range = st.date_input(
         "Rentang waktu",
         [min_date, max_date],
         min_value=min_date,
         max_value=max_date
     )
+
+# Validasi input tanggal
+if isinstance(date_range, tuple) and len(date_range) == 2:
+    start_date, end_date = date_range
+else:
+    st.warning("⚠️ Silakan pilih dua tanggal untuk menentukan rentang waktu.")
+    st.stop()
 
 # Filter data berdasarkan tanggal
 filtered_df = day_df[(day_df['dteday'] >= pd.to_datetime(start_date)) & 
