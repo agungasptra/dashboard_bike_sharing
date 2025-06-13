@@ -8,18 +8,31 @@ sns.set(style='darkgrid')
 # Load dataset
 day_df = pd.read_csv("day.csv")
 
-# Konversi kolom tanggal
+# Cleaning data
 day_df['dteday'] = pd.to_datetime(day_df['dteday'])
+day_df.rename(columns={
+    'dteday': 'date',
+    'yr': 'year',
+    'mnth': 'month',
+    'hum': 'humidity',
+    'cnt': 'total_rentals',
+    'atemp': 'feels_like_temp',
+    'temp': 'temperature',
+    'windspeed': 'wind_speed',
+    'weathersit': 'weather_condition',
+}, inplace=True)
+day_df.drop(columns=['instant'], inplace=True)
+day_df.drop_duplicates(inplace=True)
 
 # Sidebar - Rentang tanggal
-min_date = day_df['dteday'].min()
-max_date = day_df['dteday'].max()
+min_date = day_df['date'].min()
+max_date = day_df['date'].max()
 
 with st.sidebar:
     st.title("Bike Sharing Dashboard")
-    st.markdown("### Pilih Rentang Waktu:")
+    st.markdown("### Select Date Range:")
     date_range = st.date_input(
-        "Rentang waktu",
+        "Date Range",
         [min_date, max_date],
         min_value=min_date,
         max_value=max_date
@@ -29,51 +42,51 @@ with st.sidebar:
 if isinstance(date_range, tuple) and len(date_range) == 2:
     start_date, end_date = date_range
 else:
-    st.warning("⚠️ Silakan pilih dua tanggal untuk menentukan rentang waktu.")
+    st.warning("⚠️ Please select two dates to set the date range.")
     st.stop()
 
 # Filter data berdasarkan tanggal
-filtered_df = day_df[(day_df['dteday'] >= pd.to_datetime(start_date)) & 
-                     (day_df['dteday'] <= pd.to_datetime(end_date))]
+filtered_df = day_df[(day_df['date'] >= pd.to_datetime(start_date)) & 
+                     (day_df['date'] <= pd.to_datetime(end_date))]
 
 # Header
-st.title("📊 Dashboard Bike Sharing Dataset")
+st.title("📊 Bike Sharing Dataset Dashboard")
 
 # METRIC
 col1, col2 = st.columns(2)
 with col1:
-    st.metric("Total Peminjaman", value=int(filtered_df['cnt'].sum()))
+    st.metric("Total Rentals", value=int(filtered_df['total_rentals'].sum()))
 with col2:
-    st.metric("Rata-rata Peminjaman", value=round(filtered_df['cnt'].mean(), 2))
+    st.metric("Average Rentals", value=round(filtered_df['total_rentals'].mean(), 2))
 
 # Grafik jumlah peminjaman per hari
-st.subheader("Jumlah Peminjaman Sepeda Harian")
+st.subheader("Daily Bike Rentals")
 fig, ax = plt.subplots(figsize=(15, 5))
-ax.plot(filtered_df['dteday'], filtered_df['cnt'], marker='o', linestyle='-')
-ax.set_xlabel("Tanggal")
-ax.set_ylabel("Jumlah Peminjaman")
+ax.plot(filtered_df['date'], filtered_df['total_rentals'], marker='o', linestyle='-')
+ax.set_xlabel("Date")
+ax.set_ylabel("Total Rentals")
 st.pyplot(fig)
 
 # Distribusi berdasarkan season
-st.subheader("Distribusi Peminjaman Berdasarkan Musim (Season)")
+st.subheader("Rentals Distribution by Season")
 season_map = {1: "Spring", 2: "Summer", 3: "Fall", 4: "Winter"}
 filtered_df['season'] = filtered_df['season'].map(season_map)
 fig, ax = plt.subplots()
-sns.boxplot(x='season', y='cnt', data=filtered_df, palette="coolwarm", ax=ax)
+sns.boxplot(x='season', y='total_rentals', data=filtered_df, palette="coolwarm", ax=ax)
 st.pyplot(fig)
 
 # Distribusi berdasarkan weekday
-st.subheader("Rata-rata Peminjaman Berdasarkan Hari")
+st.subheader("Average Rentals by Weekday")
 weekday_map = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 filtered_df['weekday'] = filtered_df['weekday'].apply(lambda x: weekday_map[x])
-weekday_avg = filtered_df.groupby('weekday')['cnt'].mean().reindex(weekday_map)
+weekday_avg = filtered_df.groupby('weekday')['total_rentals'].mean().reindex(weekday_map)
 fig, ax = plt.subplots()
 weekday_avg.plot(kind='bar', ax=ax, color="#90CAF9")
-ax.set_ylabel("Rata-rata Peminjaman")
+ax.set_ylabel("Average Rentals")
 st.pyplot(fig)
 
 # Hubungan antara suhu dan peminjaman
-st.subheader("Hubungan Suhu dengan Jumlah Peminjaman")
+st.subheader("Temperature vs Total Rentals")
 fig, ax = plt.subplots()
-sns.scatterplot(x='temp', y='cnt', data=filtered_df, ax=ax)
+sns.scatterplot(x='temperature', y='total_rentals', data=filtered_df, ax=ax)
 st.pyplot(fig)
